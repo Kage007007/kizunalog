@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' hide Column;
 import '../../database/database.dart';
 import '../../models/category.dart';
+import '../../services/ad_service.dart';
 
 class WordRecordScreen extends StatefulWidget {
   const WordRecordScreen({super.key});
@@ -30,6 +31,7 @@ class _WordRecordScreenState extends State<WordRecordScreen> {
         content: Value(_textController.text.trim()),
       ),
     );
+    AdService.instance.onRecordComplete();
     if (mounted) {
       setState(() => _step = 2);
     }
