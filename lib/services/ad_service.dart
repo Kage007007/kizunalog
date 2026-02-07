@@ -10,9 +10,8 @@ class AdService {
   int _detailViewCount = 0;
   InterstitialAd? _interstitialAd;
 
-  // テスト広告ID（本番リリース時に差し替え）
-  static const String bannerAdUnitId = 'ca-app-pub-3940256099942544/2435281174';
-  static const String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/4411468910';
+  static const String bannerAdUnitId = 'ca-app-pub-5520164831450548/1436339048';
+  static const String _interstitialAdUnitId = 'ca-app-pub-5520164831450548/7761230358';
 
   Future<void> initialize() async {
     await MobileAds.instance.initialize();
