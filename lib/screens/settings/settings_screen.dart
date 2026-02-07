@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/backup_service.dart';
+import '../../services/notification_service.dart';
 import '../../database/database.dart';
 import '../onboarding/onboarding_screen.dart';
 
@@ -14,6 +15,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   DateTime? _lastBackup;
   bool _isExporting = false;
   int _memoryCount = 0;
+  bool _notificationEnabled = false;
+  int _notificationHour = 20;
+  int _notificationMinute = 0;
 
   @override
   void initState() {
@@ -24,11 +28,44 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadInfo() async {
     final lastBackup = await BackupService.instance.lastBackupDate();
     final count = await AppDatabase.instance.getMemoryCount();
+    final notifEnabled = await NotificationService.instance.isEnabled;
+    final notifHour = await NotificationService.instance.hour;
+    final notifMinute = await NotificationService.instance.minute;
     if (mounted) {
       setState(() {
         _lastBackup = lastBackup;
         _memoryCount = count;
+        _notificationEnabled = notifEnabled;
+        _notificationHour = notifHour;
+        _notificationMinute = notifMinute;
       });
+    }
+  }
+
+  Future<void> _toggleNotification(bool value) async {
+    if (value) {
+      final granted = await NotificationService.instance.requestPermission();
+      if (!granted) return;
+      await NotificationService.instance.scheduleDailyNotification(_notificationHour, _notificationMinute);
+    } else {
+      await NotificationService.instance.cancelNotification();
+    }
+    setState(() => _notificationEnabled = value);
+  }
+
+  Future<void> _pickNotificationTime() async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: _notificationHour, minute: _notificationMinute),
+    );
+    if (picked != null) {
+      setState(() {
+        _notificationHour = picked.hour;
+        _notificationMinute = picked.minute;
+      });
+      if (_notificationEnabled) {
+        await NotificationService.instance.scheduleDailyNotification(picked.hour, picked.minute);
+      }
     }
   }
 
@@ -112,6 +149,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ? '${_lastBackup!.year}/${_lastBackup!.month}/${_lastBackup!.day} ${_lastBackup!.hour}:${_lastBackup!.minute.toString().padLeft(2, '0')}'
                     : 'まだありません',
               ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // 通知
+          _buildSection(
+            title: 'リマインダー',
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.notifications_rounded, size: 18, color: Colors.orange),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('毎日のリマインダー', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500)),
+                          const SizedBox(height: 2),
+                          Text(
+                            '思い出を記録する時間をお知らせ',
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch.adaptive(
+                      value: _notificationEnabled,
+                      onChanged: _toggleNotification,
+                      activeColor: Colors.orange,
+                    ),
+                  ],
+                ),
+              ),
+              if (_notificationEnabled) ...[
+                const Divider(height: 1),
+                InkWell(
+                  onTap: _pickNotificationTime,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      children: [
+                        Icon(Icons.schedule_rounded, size: 20, color: Colors.grey.shade500),
+                        const SizedBox(width: 12),
+                        Text('通知時刻', style: TextStyle(fontSize: 15, color: Colors.grey.shade700)),
+                        const Spacer(),
+                        Text(
+                          '${_notificationHour.toString().padLeft(2, '0')}:${_notificationMinute.toString().padLeft(2, '0')}',
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 20),

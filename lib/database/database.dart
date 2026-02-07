@@ -91,4 +91,36 @@ class AppDatabase extends _$AppDatabase {
     final result = await query.getSingle();
     return result.read(count)!;
   }
+
+  /// キーワード検索
+  Stream<List<Memory>> searchMemories(String keyword) {
+    return (select(memories)
+          ..where((t) => t.content.like('%$keyword%') | t.subType.like('%$keyword%'))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .watch();
+  }
+
+  /// 最近の思い出を複数取得（ホームカード用）
+  Future<List<Memory>> getRecentMemories({int limit = 10}) {
+    return (select(memories)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(limit))
+        .get();
+  }
+
+  /// 単一の思い出を取得
+  Future<Memory?> getMemoryById(String id) {
+    return (select(memories)..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  /// 思い出を更新（個別フィールド）
+  Future<int> updateMemoryFields(String id, {String? content, String? subType, int? amount}) {
+    return (update(memories)..where((t) => t.id.equals(id))).write(
+      MemoriesCompanion(
+        content: content != null ? Value(content) : const Value.absent(),
+        subType: subType != null ? Value(subType) : const Value.absent(),
+        amount: amount != null ? Value(amount) : const Value.absent(),
+      ),
+    );
+  }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../database/database.dart';
 import '../models/category.dart';
@@ -13,6 +14,7 @@ import 'list/memory_list_screen.dart';
 import 'list/growth_chart_screen.dart';
 import 'settings/settings_screen.dart';
 import 'onboarding/onboarding_screen.dart';
+import 'detail/memory_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,14 +24,34 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Memory? _randomMemory;
+  List<Memory> _recentMemories = [];
   int _memoryCount = 0;
+  final PageController _pageController = PageController();
+  Timer? _autoTimer;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadRandomMemory();
+    _loadMemories();
     _checkOnboarding();
+  }
+
+  @override
+  void dispose() {
+    _autoTimer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoRotation() {
+    _autoTimer?.cancel();
+    if (_recentMemories.length <= 1) return;
+    _autoTimer = Timer.periodic(const Duration(seconds: 5), (_) {
+      if (!mounted || !_pageController.hasClients) return;
+      final next = (_currentPage + 1) % _recentMemories.length;
+      _pageController.animateToPage(next, duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+    });
   }
 
   Future<void> _checkOnboarding() async {
@@ -42,15 +64,22 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _loadRandomMemory() async {
-    final memory = await AppDatabase.instance.getRandomMemory();
+  Future<void> _loadMemories() async {
+    final memories = await AppDatabase.instance.getRecentMemories(limit: 10);
     final count = await AppDatabase.instance.getMemoryCount();
     if (mounted) {
       setState(() {
-        _randomMemory = memory;
+        _recentMemories = memories;
         _memoryCount = count;
       });
+      _startAutoRotation();
     }
+  }
+
+  void _onCardTap(Memory memory) {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => MemoryDetailScreen(memory: memory)))
+        .then((_) => _loadMemories());
   }
 
   void _onCategoryTap(MemoryCategory category) {
@@ -69,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => screen))
-        .then((_) => _loadRandomMemory());
+        .then((_) => _loadMemories());
   }
 
   @override
@@ -99,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onTap: () {
                         Navigator.of(context)
                             .push(MaterialPageRoute(builder: (_) => const MemoryListScreen()))
-                            .then((_) => _loadRandomMemory());
+                            .then((_) => _loadMemories());
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -135,11 +164,52 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
 
-              // Memory Card
-              GestureDetector(
-                onTap: _loadRandomMemory,
-                child: MemoryCard(memory: _randomMemory),
+              // Swipeable Memory Cards
+              SizedBox(
+                height: 200,
+                child: _recentMemories.isEmpty
+                    ? MemoryCard(memory: null)
+                    : PageView.builder(
+                        controller: _pageController,
+                        itemCount: _recentMemories.length,
+                        onPageChanged: (i) {
+                          _currentPage = i;
+                          // Reset auto-rotation timer on manual swipe
+                          _startAutoRotation();
+                        },
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () => _onCardTap(_recentMemories[index]),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              child: MemoryCard(memory: _recentMemories[index]),
+                            ),
+                          );
+                        },
+                      ),
               ),
+
+              // Page indicator dots
+              if (_recentMemories.length > 1) ...[
+                const SizedBox(height: 12),
+                Center(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(_recentMemories.length.clamp(0, 10), (i) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: i == _currentPage ? 16 : 6,
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: i == _currentPage ? Colors.pink.shade300 : Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 16),
 
@@ -152,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.grey.shade600,
                     onTap: () => Navigator.of(context)
                         .push(MaterialPageRoute(builder: (_) => const MemoryListScreen()))
-                        .then((_) => _loadRandomMemory()),
+                        .then((_) => _loadMemories()),
                   ),
                   const SizedBox(width: 10),
                   _buildQuickLink(
@@ -170,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: MemoryCategory.money.color,
                     onTap: () => Navigator.of(context)
                         .push(MaterialPageRoute(builder: (_) => MemoryListScreen(filterCategory: MemoryCategory.money)))
-                        .then((_) => _loadRandomMemory()),
+                        .then((_) => _loadMemories()),
                   ),
                 ],
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/share_service.dart';
+import '../detail/memory_detail_screen.dart';
 
 class MemoryListScreen extends StatefulWidget {
   final MemoryCategory? filterCategory;
@@ -17,7 +18,12 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
   bool _selectMode = false;
   final Set<String> _selectedIds = {};
   MemoryCategory? _activeFilter;
+  String? _activeSubType;
   bool _sortNewestFirst = true;
+  String _searchQuery = '';
+  DateTimeRange? _dateRange;
+  final _searchController = TextEditingController();
+  bool _showSearch = false;
 
   @override
   void initState() {
@@ -25,11 +31,44 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
     _activeFilter = widget.filterCategory;
   }
 
-  Stream<List<Memory>> get _stream {
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Stream<List<Memory>> get _baseStream {
+    if (_searchQuery.isNotEmpty) {
+      return AppDatabase.instance.searchMemories(_searchQuery);
+    }
     if (_activeFilter != null) {
       return AppDatabase.instance.watchMemoriesByCategory(_activeFilter!.name);
     }
     return AppDatabase.instance.watchAllMemories();
+  }
+
+  List<Memory> _applyFilters(List<Memory> items) {
+    var filtered = items;
+
+    // Sub-type filter
+    if (_activeSubType != null) {
+      filtered = filtered.where((m) => m.subType == _activeSubType).toList();
+    }
+
+    // Date range filter
+    if (_dateRange != null) {
+      filtered = filtered.where((m) {
+        return !m.createdAt.isBefore(_dateRange!.start) &&
+            m.createdAt.isBefore(_dateRange!.end.add(const Duration(days: 1)));
+      }).toList();
+    }
+
+    // Sort
+    if (!_sortNewestFirst) {
+      filtered = filtered.reversed.toList();
+    }
+
+    return filtered;
   }
 
   void _toggleSelectMode() {
@@ -55,9 +94,30 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
     await ShareService.instance.shareMemories(selected);
   }
 
-  List<Memory> _applySorting(List<Memory> items) {
-    if (_sortNewestFirst) return items; // DB already sorts desc
-    return items.reversed.toList();
+  Future<void> _pickDateRange() async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      initialDateRange: _dateRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(primary: Colors.pink.shade300),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() => _dateRange = picked);
+    }
+  }
+
+  List<String> get _availableSubTypes {
+    if (_activeFilter == null) return [];
+    return _activeFilter!.subTypes;
   }
 
   @override
@@ -66,35 +126,51 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
       backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: Text(
-          _selectMode
-              ? '${_selectedIds.length}件選択中'
-              : _activeFilter?.label ?? 'すべての思い出',
-        ),
+        title: _showSearch
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'キーワードで検索...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _searchQuery = v.trim()),
+              )
+            : Text(
+                _selectMode
+                    ? '${_selectedIds.length}件選択中'
+                    : _activeFilter?.label ?? 'すべての思い出',
+              ),
         actions: [
+          IconButton(
+            icon: Icon(_showSearch ? Icons.close_rounded : Icons.search_rounded, size: 22),
+            onPressed: () {
+              setState(() {
+                _showSearch = !_showSearch;
+                if (!_showSearch) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
+          ),
           IconButton(
             icon: Icon(_sortNewestFirst ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, size: 20),
             onPressed: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
             tooltip: _sortNewestFirst ? '古い順にする' : '新しい順にする',
           ),
           if (_selectMode)
-            IconButton(
-              icon: const Icon(Icons.close_rounded),
-              onPressed: _toggleSelectMode,
-            )
+            IconButton(icon: const Icon(Icons.close_rounded), onPressed: _toggleSelectMode)
           else
-            IconButton(
-              icon: const Icon(Icons.checklist_rounded),
-              onPressed: _toggleSelectMode,
-              tooltip: 'まとめてシェア',
-            ),
+            IconButton(icon: const Icon(Icons.checklist_rounded), onPressed: _toggleSelectMode, tooltip: 'まとめてシェア'),
         ],
       ),
       body: Column(
         children: [
-          // Filter chips
+          // Category filter chips
           SizedBox(
-            height: 48,
+            height: 44,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -104,11 +180,70 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
               ],
             ),
           ),
+
+          // Sub-type filter chips (when a category is active)
+          if (_availableSubTypes.isNotEmpty)
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  _buildSubTypeChip(null, 'すべて'),
+                  ..._availableSubTypes.map((sub) => _buildSubTypeChip(sub, sub)),
+                ],
+              ),
+            ),
+
+          // Date range & active filters
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Row(
+              children: [
+                GestureDetector(
+                  onTap: _pickDateRange,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _dateRange != null ? Colors.pink.shade50 : Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: _dateRange != null ? Colors.pink.shade200 : Colors.grey.shade200),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.calendar_today_rounded, size: 14,
+                            color: _dateRange != null ? Colors.pink.shade400 : Colors.grey.shade500),
+                        const SizedBox(width: 4),
+                        Text(
+                          _dateRange != null
+                              ? '${_dateRange!.start.month}/${_dateRange!.start.day} - ${_dateRange!.end.month}/${_dateRange!.end.day}'
+                              : '期間',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _dateRange != null ? Colors.pink.shade400 : Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (_dateRange != null) ...[
+                  const SizedBox(width: 4),
+                  GestureDetector(
+                    onTap: () => setState(() => _dateRange = null),
+                    child: Icon(Icons.close_rounded, size: 16, color: Colors.grey.shade400),
+                  ),
+                ],
+              ],
+            ),
+          ),
           const SizedBox(height: 4),
+
           // Memory list
           Expanded(
             child: StreamBuilder<List<Memory>>(
-              stream: _stream,
+              stream: _baseStream,
               builder: (context, snapshot) {
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(
@@ -122,7 +257,19 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
                     ),
                   );
                 }
-                final items = _applySorting(snapshot.data!);
+                final items = _applyFilters(snapshot.data!);
+                if (items.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.filter_list_off_rounded, size: 64, color: Colors.grey.shade300),
+                        const SizedBox(height: 16),
+                        Text('条件に一致する記録がありません', style: TextStyle(fontSize: 16, color: Colors.grey.shade400)),
+                      ],
+                    ),
+                  );
+                }
                 return ListView.separated(
                   padding: const EdgeInsets.all(20),
                   itemCount: items.length,
@@ -142,36 +289,42 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
                       );
                     }
 
-                    return Dismissible(
-                      key: Key(memory.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 24),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Icon(Icons.delete_rounded, color: Colors.red.shade400),
-                      ),
-                      confirmDismiss: (_) async {
-                        return await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('削除しますか？'),
-                            content: const Text('この思い出は元に戻せません'),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('キャンセル')),
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(true),
-                                child: Text('削除', style: TextStyle(color: Colors.red.shade400)),
-                              ),
-                            ],
-                          ),
-                        );
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.of(context)
+                            .push(MaterialPageRoute(builder: (_) => MemoryDetailScreen(memory: memory)));
                       },
-                      onDismissed: (_) => AppDatabase.instance.deleteMemory(memory.id),
-                      child: _buildMemoryTile(memory, cat),
+                      child: Dismissible(
+                        key: Key(memory.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 24),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(Icons.delete_rounded, color: Colors.red.shade400),
+                        ),
+                        confirmDismiss: (_) async {
+                          return await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('削除しますか？'),
+                              content: const Text('この思い出は元に戻せません'),
+                              actions: [
+                                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('キャンセル')),
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: Text('削除', style: TextStyle(color: Colors.red.shade400)),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        onDismissed: (_) => AppDatabase.instance.deleteMemory(memory.id),
+                        child: _buildMemoryTile(memory, cat),
+                      ),
                     );
                   },
                 );
@@ -182,7 +335,7 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
       ),
       floatingActionButton: _selectMode && _selectedIds.isNotEmpty
           ? StreamBuilder<List<Memory>>(
-              stream: _stream,
+              stream: _baseStream,
               builder: (context, snapshot) {
                 return FloatingActionButton.extended(
                   onPressed: snapshot.hasData ? () => _shareSelected(snapshot.data!) : null,
@@ -205,11 +358,7 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
       child: FilterChip(
         selected: isActive,
         label: Text(label),
-        labelStyle: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: isActive ? Colors.white : color,
-        ),
+        labelStyle: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: isActive ? Colors.white : color),
         backgroundColor: Colors.white,
         selectedColor: color,
         side: BorderSide(color: isActive ? color : Colors.grey.shade200),
@@ -218,9 +367,28 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
         onSelected: (_) {
           setState(() {
             _activeFilter = category;
+            _activeSubType = null;
             _selectedIds.clear();
           });
         },
+      ),
+    );
+  }
+
+  Widget _buildSubTypeChip(String? subType, String label) {
+    final isActive = _activeSubType == subType;
+    final color = _activeFilter?.color ?? Colors.grey;
+    return Padding(
+      padding: const EdgeInsets.only(right: 6),
+      child: ChoiceChip(
+        selected: isActive,
+        label: Text(label, style: TextStyle(fontSize: 12, color: isActive ? Colors.white : color)),
+        backgroundColor: Colors.white,
+        selectedColor: color.withValues(alpha: 0.8),
+        side: BorderSide(color: isActive ? color : Colors.grey.shade200),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        showCheckmark: false,
+        onSelected: (_) => setState(() => _activeSubType = subType),
       ),
     );
   }
