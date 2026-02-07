@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/ad_service.dart';
+import '../../widgets/sub_type_grid.dart';
 
 class AlbumRecordScreen extends StatefulWidget {
   const AlbumRecordScreen({super.key});
@@ -25,7 +26,7 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedSubType = _category.subTypes.first;
+    _selectedSubType = _category.subTypes.first.label;
   }
 
   @override
@@ -36,9 +37,7 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     final picked = await _picker.pickImage(source: source, maxWidth: 1920, imageQuality: 85);
-    if (picked != null) {
-      setState(() => _imageFile = File(picked.path));
-    }
+    if (picked != null) setState(() => _imageFile = File(picked.path));
   }
 
   Future<String?> _saveImageLocally() async {
@@ -93,38 +92,18 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              // サブタイプ チップ
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _category.subTypes.map((st) {
-                    final selected = _selectedSubType == st;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(st),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedSubType = st),
-                        selectedColor: _category.color.withValues(alpha: 0.2),
-                        labelStyle: TextStyle(
-                          color: selected ? _category.color : Colors.grey.shade600,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        side: BorderSide(color: selected ? _category.color : Colors.grey.shade200),
-                      ),
-                    );
-                  }).toList(),
-                ),
+              SubTypeGrid(
+                category: _category,
+                selectedLabel: _selectedSubType,
+                onSelected: (label) => setState(() => _selectedSubType = label),
               ),
               const SizedBox(height: 20),
-              // 写真選択
               if (_imageFile != null)
                 GestureDetector(
                   onTap: () => setState(() => _imageFile = null),
@@ -132,7 +111,7 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Image.file(_imageFile!, height: 200, width: double.infinity, fit: BoxFit.cover),
+                        child: Image.file(_imageFile!, height: 180, width: double.infinity, fit: BoxFit.cover),
                       ),
                       Positioned(
                         top: 8, right: 8,
@@ -152,8 +131,7 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
                     Expanded(child: _buildImageButton(Icons.photo_library_rounded, 'アルバム', () => _pickImage(ImageSource.gallery))),
                   ],
                 ),
-              const SizedBox(height: 16),
-              // メモ
+              const SizedBox(height: 12),
               TextField(
                 controller: _textController,
                 maxLines: 2,
@@ -165,10 +143,9 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
               SizedBox(
-                width: double.infinity,
-                height: 56,
+                width: double.infinity, height: 56,
                 child: ElevatedButton(
                   onPressed: _imageFile == null ? null : _save,
                   style: ElevatedButton.styleFrom(
@@ -191,11 +168,10 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 32),
+        padding: const EdgeInsets.symmetric(vertical: 28),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade200, style: BorderStyle.solid),
+          color: Colors.white, borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
         ),
         child: Column(
           children: [

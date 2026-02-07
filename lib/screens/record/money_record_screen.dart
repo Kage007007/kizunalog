@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' hide Column;
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/ad_service.dart';
+import '../../widgets/sub_type_grid.dart';
 
 class MoneyRecordScreen extends StatefulWidget {
   const MoneyRecordScreen({super.key});
@@ -21,7 +22,7 @@ class _MoneyRecordScreenState extends State<MoneyRecordScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedSubType = _category.subTypes.first;
+    _selectedSubType = _category.subTypes.first.label;
   }
 
   @override
@@ -72,38 +73,18 @@ class _MoneyRecordScreenState extends State<MoneyRecordScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              // サブタイプ チップ
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _category.subTypes.map((st) {
-                    final selected = _selectedSubType == st;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(st),
-                        selected: selected,
-                        onSelected: (_) => setState(() => _selectedSubType = st),
-                        selectedColor: _category.color.withValues(alpha: 0.2),
-                        labelStyle: TextStyle(
-                          color: selected ? _category.color : Colors.grey.shade600,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        side: BorderSide(color: selected ? _category.color : Colors.grey.shade200),
-                      ),
-                    );
-                  }).toList(),
-                ),
+              SubTypeGrid(
+                category: _category,
+                selectedLabel: _selectedSubType,
+                onSelected: (label) => setState(() => _selectedSubType = label),
               ),
               const SizedBox(height: 24),
-              // 金額入力
               const Text('いくら？', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               TextField(
@@ -133,7 +114,7 @@ class _MoneyRecordScreenState extends State<MoneyRecordScreen> {
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity, height: 56,
                 child: ElevatedButton(

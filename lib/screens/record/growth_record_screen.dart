@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' hide Column;
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/ad_service.dart';
+import '../../widgets/sub_type_grid.dart';
 
 class GrowthRecordScreen extends StatefulWidget {
   const GrowthRecordScreen({super.key});
@@ -21,7 +22,7 @@ class _GrowthRecordScreenState extends State<GrowthRecordScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedSubType = _category.subTypes.first;
+    _selectedSubType = _category.subTypes.first.label;
   }
 
   @override
@@ -86,37 +87,19 @@ class _GrowthRecordScreenState extends State<GrowthRecordScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: _category.subTypes.map((st) {
-                    final selected = _selectedSubType == st;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ChoiceChip(
-                        label: Text(st),
-                        selected: selected,
-                        onSelected: (_) => setState(() {
-                          _selectedSubType = st;
-                          _valueController.clear();
-                        }),
-                        selectedColor: _category.color.withValues(alpha: 0.2),
-                        labelStyle: TextStyle(
-                          color: selected ? _category.color : Colors.grey.shade600,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                        side: BorderSide(color: selected ? _category.color : Colors.grey.shade200),
-                      ),
-                    );
-                  }).toList(),
-                ),
+              SubTypeGrid(
+                category: _category,
+                selectedLabel: _selectedSubType,
+                onSelected: (label) => setState(() {
+                  _selectedSubType = label;
+                  _valueController.clear();
+                }),
               ),
               const SizedBox(height: 24),
               Text(
@@ -154,7 +137,7 @@ class _GrowthRecordScreenState extends State<GrowthRecordScreen> {
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
                   ),
                 ),
-              const Spacer(),
+              const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity, height: 56,
                 child: ElevatedButton(
