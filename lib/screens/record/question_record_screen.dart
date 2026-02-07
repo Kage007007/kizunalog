@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:drift/drift.dart' hide Column;
+import 'package:share_plus/share_plus.dart';
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/ad_service.dart';
@@ -33,6 +34,11 @@ class _QuestionRecordScreenState extends State<QuestionRecordScreen> {
     );
     AdService.instance.onRecordComplete();
     if (mounted) setState(() => _step = 2);
+  }
+
+  Future<void> _share() async {
+    final text = '${_category.label} - ${_selectedSubType ?? ''}\n${_textController.text.trim()}\n\n#KizunaLog';
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
   @override
@@ -190,6 +196,18 @@ class _QuestionRecordScreenState extends State<QuestionRecordScreen> {
           const SizedBox(height: 8),
           Text('いい質問だったね', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
           const SizedBox(height: 48),
+          OutlinedButton.icon(
+            onPressed: _share,
+            icon: const Icon(Icons.share_rounded),
+            label: const Text('シェアする', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _category.color,
+              side: BorderSide(color: _category.color),
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+          const SizedBox(height: 12),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: ElevatedButton.styleFrom(

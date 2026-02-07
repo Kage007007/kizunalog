@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:drift/drift.dart' hide Column;
+import 'package:share_plus/share_plus.dart';
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/ad_service.dart';
@@ -54,6 +55,12 @@ class _GrowthRecordScreenState extends State<GrowthRecordScreen> {
     );
     AdService.instance.onRecordComplete();
     if (mounted) setState(() => _step = 2);
+  }
+
+  Future<void> _share() async {
+    final content = _isNumericType ? '${_valueController.text}$_unitLabel' : _valueController.text.trim();
+    final text = '${_category.label} - ${_selectedSubType ?? ''}\n$content\n\n#KizunaLog';
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
   @override
@@ -229,6 +236,18 @@ class _GrowthRecordScreenState extends State<GrowthRecordScreen> {
           const SizedBox(height: 8),
           Text('すくすく成長してるね', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
           const SizedBox(height: 48),
+          OutlinedButton.icon(
+            onPressed: _share,
+            icon: const Icon(Icons.share_rounded),
+            label: const Text('シェアする', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _category.color,
+              side: BorderSide(color: _category.color),
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+          const SizedBox(height: 12),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: ElevatedButton.styleFrom(

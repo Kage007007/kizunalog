@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../database/database.dart';
 import '../models/category.dart';
+import '../services/share_service.dart';
 
 class MemoryCard extends StatelessWidget {
   final Memory? memory;
@@ -53,6 +54,11 @@ class MemoryCard extends StatelessWidget {
                   color: Colors.grey.shade500,
                   fontSize: 12,
                 ),
+              ),
+              const SizedBox(width: 8),
+              GestureDetector(
+                onTap: () => ShareService.instance.shareMemory(memory!),
+                child: Icon(Icons.share_rounded, size: 18, color: Colors.grey.shade400),
               ),
             ],
           ),

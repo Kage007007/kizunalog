@@ -4,6 +4,7 @@ import 'package:drift/drift.dart' hide Column;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:share_plus/share_plus.dart';
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/ad_service.dart';
@@ -64,6 +65,15 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
     );
     AdService.instance.onRecordComplete();
     if (mounted) setState(() => _step = 3);
+  }
+
+  Future<void> _share() async {
+    final List<XFile> files = [];
+    if (_imageFile != null && _imageFile!.existsSync()) {
+      files.add(XFile(_imageFile!.path));
+    }
+    final text = '${_category.label} - ${_selectedSubType ?? ''}${_textController.text.trim().isNotEmpty ? '\n${_textController.text.trim()}' : ''}\n\n#KizunaLog';
+    await SharePlus.instance.share(ShareParams(text: text, files: files.isEmpty ? null : files));
   }
 
   @override
@@ -284,6 +294,18 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
           const SizedBox(height: 8),
           Text('すてきな写真をありがとう', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
           const SizedBox(height: 48),
+          OutlinedButton.icon(
+            onPressed: _share,
+            icon: const Icon(Icons.share_rounded),
+            label: const Text('シェアする', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: _category.color,
+              side: BorderSide(color: _category.color),
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          ),
+          const SizedBox(height: 12),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: ElevatedButton.styleFrom(
