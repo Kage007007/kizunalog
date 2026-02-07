@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/backup_service.dart';
 import '../../database/database.dart';
+import '../onboarding/onboarding_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -148,6 +149,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSection(
             title: 'アプリ情報',
             children: [
+              _buildActionTile(
+                icon: Icons.help_outline_rounded,
+                iconColor: Colors.orange,
+                title: '使い方ガイド',
+                subtitle: 'アプリの使い方を確認できます',
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const OnboardingScreen(fromSettings: true)),
+                ),
+              ),
+              const Divider(height: 1),
               _buildInfoRow(Icons.apps_rounded, 'アプリ名', 'KizunaLog'),
               _buildInfoRow(Icons.tag_rounded, 'バージョン', '1.0.0'),
             ],

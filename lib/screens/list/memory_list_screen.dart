@@ -16,6 +16,21 @@ class MemoryListScreen extends StatefulWidget {
 class _MemoryListScreenState extends State<MemoryListScreen> {
   bool _selectMode = false;
   final Set<String> _selectedIds = {};
+  MemoryCategory? _activeFilter;
+  bool _sortNewestFirst = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _activeFilter = widget.filterCategory;
+  }
+
+  Stream<List<Memory>> get _stream {
+    if (_activeFilter != null) {
+      return AppDatabase.instance.watchMemoriesByCategory(_activeFilter!.name);
+    }
+    return AppDatabase.instance.watchAllMemories();
+  }
 
   void _toggleSelectMode() {
     setState(() {
@@ -40,12 +55,13 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
     await ShareService.instance.shareMemories(selected);
   }
 
+  List<Memory> _applySorting(List<Memory> items) {
+    if (_sortNewestFirst) return items; // DB already sorts desc
+    return items.reversed.toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final stream = widget.filterCategory != null
-        ? AppDatabase.instance.watchMemoriesByCategory(widget.filterCategory!.name)
-        : AppDatabase.instance.watchAllMemories();
-
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F0),
       appBar: AppBar(
@@ -53,9 +69,14 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
         title: Text(
           _selectMode
               ? '${_selectedIds.length}件選択中'
-              : widget.filterCategory?.label ?? 'すべての思い出',
+              : _activeFilter?.label ?? 'すべての思い出',
         ),
         actions: [
+          IconButton(
+            icon: Icon(_sortNewestFirst ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, size: 20),
+            onPressed: () => setState(() => _sortNewestFirst = !_sortNewestFirst),
+            tooltip: _sortNewestFirst ? '古い順にする' : '新しい順にする',
+          ),
           if (_selectMode)
             IconButton(
               icon: const Icon(Icons.close_rounded),
@@ -69,79 +90,99 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
             ),
         ],
       ),
-      body: StreamBuilder<List<Memory>>(
-        stream: stream,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.inbox_rounded, size: 64, color: Colors.grey.shade300),
-                  const SizedBox(height: 16),
-                  Text('まだ記録がありません', style: TextStyle(fontSize: 16, color: Colors.grey.shade400)),
-                ],
-              ),
-            );
-          }
-          final items = snapshot.data!;
-          return ListView.separated(
-            padding: const EdgeInsets.all(20),
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final memory = items[index];
-              final cat = MemoryCategory.values.firstWhere(
-                (c) => c.name == memory.category,
-                orElse: () => MemoryCategory.words,
-              );
-              final isSelected = _selectedIds.contains(memory.id);
-
-              if (_selectMode) {
-                return GestureDetector(
-                  onTap: () => _toggleSelection(memory.id),
-                  child: _buildMemoryTile(memory, cat, isSelected: isSelected),
-                );
-              }
-
-              return Dismissible(
-                key: Key(memory.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 24),
-                  decoration: BoxDecoration(
-                    color: Colors.red.shade100,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Icon(Icons.delete_rounded, color: Colors.red.shade400),
-                ),
-                confirmDismiss: (_) async {
-                  return await showDialog<bool>(
-                    context: context,
-                    builder: (ctx) => AlertDialog(
-                      title: const Text('削除しますか？'),
-                      content: const Text('この思い出は元に戻せません'),
-                      actions: [
-                        TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('キャンセル')),
-                        TextButton(
-                          onPressed: () => Navigator.of(ctx).pop(true),
-                          child: Text('削除', style: TextStyle(color: Colors.red.shade400)),
-                        ),
+      body: Column(
+        children: [
+          // Filter chips
+          SizedBox(
+            height: 48,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: [
+                _buildFilterChip(null, 'すべて'),
+                ...MemoryCategory.values.map((cat) => _buildFilterChip(cat, cat.label)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          // Memory list
+          Expanded(
+            child: StreamBuilder<List<Memory>>(
+              stream: _stream,
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.inbox_rounded, size: 64, color: Colors.grey.shade300),
+                        const SizedBox(height: 16),
+                        Text('まだ記録がありません', style: TextStyle(fontSize: 16, color: Colors.grey.shade400)),
                       ],
                     ),
                   );
-                },
-                onDismissed: (_) => AppDatabase.instance.deleteMemory(memory.id),
-                child: _buildMemoryTile(memory, cat),
-              );
-            },
-          );
-        },
+                }
+                final items = _applySorting(snapshot.data!);
+                return ListView.separated(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final memory = items[index];
+                    final cat = MemoryCategory.values.firstWhere(
+                      (c) => c.name == memory.category,
+                      orElse: () => MemoryCategory.words,
+                    );
+                    final isSelected = _selectedIds.contains(memory.id);
+
+                    if (_selectMode) {
+                      return GestureDetector(
+                        onTap: () => _toggleSelection(memory.id),
+                        child: _buildMemoryTile(memory, cat, isSelected: isSelected),
+                      );
+                    }
+
+                    return Dismissible(
+                      key: Key(memory.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(Icons.delete_rounded, color: Colors.red.shade400),
+                      ),
+                      confirmDismiss: (_) async {
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            title: const Text('削除しますか？'),
+                            content: const Text('この思い出は元に戻せません'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('キャンセル')),
+                              TextButton(
+                                onPressed: () => Navigator.of(ctx).pop(true),
+                                child: Text('削除', style: TextStyle(color: Colors.red.shade400)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      onDismissed: (_) => AppDatabase.instance.deleteMemory(memory.id),
+                      child: _buildMemoryTile(memory, cat),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: _selectMode && _selectedIds.isNotEmpty
           ? StreamBuilder<List<Memory>>(
-              stream: stream,
+              stream: _stream,
               builder: (context, snapshot) {
                 return FloatingActionButton.extended(
                   onPressed: snapshot.hasData ? () => _shareSelected(snapshot.data!) : null,
@@ -153,6 +194,34 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
               },
             )
           : null,
+    );
+  }
+
+  Widget _buildFilterChip(MemoryCategory? category, String label) {
+    final isActive = _activeFilter == category;
+    final color = category?.color ?? Colors.grey.shade600;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: FilterChip(
+        selected: isActive,
+        label: Text(label),
+        labelStyle: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: isActive ? Colors.white : color,
+        ),
+        backgroundColor: Colors.white,
+        selectedColor: color,
+        side: BorderSide(color: isActive ? color : Colors.grey.shade200),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        showCheckmark: false,
+        onSelected: (_) {
+          setState(() {
+            _activeFilter = category;
+            _selectedIds.clear();
+          });
+        },
+      ),
     );
   }
 

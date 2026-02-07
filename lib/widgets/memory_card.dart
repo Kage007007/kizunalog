@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../database/database.dart';
 import '../models/category.dart';
@@ -62,7 +63,19 @@ class MemoryCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          if (memory!.mediaPath != null && File(memory!.mediaPath!).existsSync()) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.file(
+                File(memory!.mediaPath!),
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
           Text(
             memory!.content.isEmpty ? '(写真の思い出)' : memory!.content,
             style: const TextStyle(

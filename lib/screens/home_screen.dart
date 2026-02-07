@@ -12,6 +12,7 @@ import 'record/growth_record_screen.dart';
 import 'list/memory_list_screen.dart';
 import 'list/growth_chart_screen.dart';
 import 'settings/settings_screen.dart';
+import 'onboarding/onboarding_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -28,6 +29,17 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRandomMemory();
+    _checkOnboarding();
+  }
+
+  Future<void> _checkOnboarding() async {
+    if (await OnboardingScreen.shouldShow()) {
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+        );
+      }
+    }
   }
 
   Future<void> _loadRandomMemory() async {
