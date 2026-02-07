@@ -4,6 +4,7 @@ import '../models/category.dart';
 import '../widgets/memory_card.dart';
 import '../widgets/category_button.dart';
 import '../widgets/banner_ad_widget.dart';
+import '../widgets/record_bottom_sheet.dart';
 import 'record/word_record_screen.dart';
 import 'record/album_record_screen.dart';
 import 'record/money_record_screen.dart';
@@ -42,22 +43,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onCategoryTap(MemoryCategory category) {
-    Widget screen;
+    Widget sheet;
     switch (category) {
       case MemoryCategory.words:
-        screen = const WordRecordScreen();
+        sheet = const WordRecordSheet();
       case MemoryCategory.album:
-        screen = const AlbumRecordScreen();
+        sheet = const AlbumRecordSheet();
       case MemoryCategory.money:
-        screen = const MoneyRecordScreen();
+        sheet = const MoneyRecordSheet();
       case MemoryCategory.questions:
-        screen = const QuestionRecordScreen();
+        sheet = const QuestionRecordSheet();
       case MemoryCategory.growth:
-        screen = const GrowthRecordScreen();
+        sheet = const GrowthRecordSheet();
     }
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => screen))
-        .then((_) => _loadRandomMemory());
+    showRecordBottomSheet(context, child: sheet).then((_) => _loadRandomMemory());
   }
 
   @override
