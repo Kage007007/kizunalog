@@ -166,24 +166,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Swipeable Memory Cards
               SizedBox(
-                height: 200,
+                height: 220,
                 child: _recentMemories.isEmpty
                     ? MemoryCard(memory: null)
                     : PageView.builder(
                         controller: _pageController,
                         itemCount: _recentMemories.length,
                         onPageChanged: (i) {
-                          _currentPage = i;
-                          // Reset auto-rotation timer on manual swipe
+                          setState(() => _currentPage = i);
                           _startAutoRotation();
                         },
                         itemBuilder: (context, index) {
                           return GestureDetector(
                             onTap: () => _onCardTap(_recentMemories[index]),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: MemoryCard(memory: _recentMemories[index]),
-                            ),
+                            child: MemoryCard(memory: _recentMemories[index]),
                           );
                         },
                       ),

@@ -18,9 +18,10 @@ class MemoryCard extends StatelessWidget {
       (c) => c.name == memory!.category,
       orElse: () => MemoryCategory.words,
     );
+    final hasImage = memory!.mediaPath != null && File(memory!.mediaPath!).existsSync();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -33,73 +34,88 @@ class MemoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: cat.color.withValues(alpha: 0.2)),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(cat.icon, color: cat.color, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                cat.label,
-                style: TextStyle(
-                  color: cat.color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                _formatDate(memory!.createdAt),
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => ShareService.instance.shareMemory(memory!),
-                child: Icon(Icons.share_rounded, size: 18, color: Colors.grey.shade400),
-              ),
-            ],
-          ),
-          if (memory!.mediaPath != null && File(memory!.mediaPath!).existsSync()) ...[
-            const SizedBox(height: 12),
+          // 写真サムネイル（左側）
+          if (hasImage)
             ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(23),
+                bottomLeft: Radius.circular(23),
+              ),
               child: Image.file(
                 File(memory!.mediaPath!),
-                height: 140,
-                width: double.infinity,
+                width: 120,
+                height: 220,
                 fit: BoxFit.cover,
               ),
             ),
-          ],
-          const SizedBox(height: 12),
-          Text(
-            memory!.content.isEmpty ? '(写真の思い出)' : memory!.content,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
+          // テキストコンテンツ（右側）
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(cat.icon, color: cat.color, size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        cat.label,
+                        style: TextStyle(
+                          color: cat.color,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: () => ShareService.instance.shareMemory(memory!),
+                        child: Icon(Icons.share_rounded, size: 16, color: Colors.grey.shade400),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatDate(memory!.createdAt),
+                    style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: Text(
+                      memory!.content.isEmpty ? '(写真の思い出)' : memory!.content,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w500,
+                        height: 1.5,
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (memory!.subType.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: cat.color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        memory!.subType,
+                        style: TextStyle(fontSize: 11, color: cat.color),
+                      ),
+                    ),
+                  if (memory!.amount != null)
+                    Text(
+                      '¥${memory!.amount}',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: cat.color),
+                    ),
+                ],
+              ),
             ),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
           ),
-          if (memory!.subType.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: cat.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                memory!.subType,
-                style: TextStyle(fontSize: 12, color: cat.color),
-              ),
-            ),
-          ],
         ],
       ),
     );
