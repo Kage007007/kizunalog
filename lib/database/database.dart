@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -81,7 +82,15 @@ class AppDatabase extends _$AppDatabase {
     return update(memories).replace(entry);
   }
 
-  Future<int> deleteMemory(String id) {
+  Future<int> deleteMemory(String id) async {
+    // 写真ファイルがあれば削除
+    final memory = await getMemoryById(id);
+    if (memory?.mediaPath != null) {
+      final file = File(memory!.mediaPath!);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
     return (delete(memories)..where((t) => t.id.equals(id))).go();
   }
 
@@ -89,13 +98,14 @@ class AppDatabase extends _$AppDatabase {
     final count = countAll();
     final query = selectOnly(memories)..addColumns([count]);
     final result = await query.getSingle();
-    return result.read(count)!;
+    return result.read(count) ?? 0;
   }
 
   /// キーワード検索
   Stream<List<Memory>> searchMemories(String keyword) {
+    final escaped = keyword.replaceAll('%', r'\%').replaceAll('_', r'\_');
     return (select(memories)
-          ..where((t) => t.content.like('%$keyword%') | t.subType.like('%$keyword%'))
+          ..where((t) => t.content.like('%$escaped%') | t.subType.like('%$escaped%'))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .watch();
   }

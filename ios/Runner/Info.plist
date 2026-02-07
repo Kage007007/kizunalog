@@ -31,15 +31,10 @@
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
@@ -54,11 +49,9 @@
 			<string>cstr6suwn9.skadnetwork</string>
 		</dict>
 	</array>
-	<key>NSUserTrackingUsageDescription</key>
-	<string>お子さまに関連する広告を表示するために使用します。データは端末内でのみ処理されます。</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>アルバムに写真を保存するために使用します</string>
+	<string>お子さんの思い出の写真をアルバムに記録するために、フォトライブラリへのアクセスが必要です</string>
 	<key>NSCameraUsageDescription</key>
-	<string>写真を撮影するために使用します</string>
+	<string>お子さんの瞬間を写真に記録するために、カメラへのアクセスが必要です</string>
 </dict>
 </plist>

@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 class AdService {
@@ -15,16 +16,23 @@ class AdService {
 
   Future<void> initialize() async {
     await MobileAds.instance.initialize();
+    // COPPA準拠: 子ども関連アプリのため非パーソナライズ広告のみ配信
+    await MobileAds.instance.updateRequestConfiguration(
+      RequestConfiguration(
+        tagForChildDirectedTreatment: TagForChildDirectedTreatment.yes,
+        maxAdContentRating: MaxAdContentRating.g,
+      ),
+    );
     _loadInterstitialAd();
   }
 
-  BannerAd createBannerAd({AdSize size = AdSize.banner}) {
+  BannerAd createBannerAd({AdSize size = AdSize.banner, VoidCallback? onLoaded}) {
     return BannerAd(
       adUnitId: bannerAdUnitId,
       size: size,
       request: const AdRequest(),
       listener: BannerAdListener(
-        onAdLoaded: (ad) {},
+        onAdLoaded: (ad) => onLoaded?.call(),
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
         },

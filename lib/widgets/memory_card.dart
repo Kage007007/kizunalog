@@ -49,6 +49,11 @@ class MemoryCard extends StatelessWidget {
                 width: 120,
                 height: 220,
                 fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 120, height: 220,
+                  color: cat.color.withValues(alpha: 0.1),
+                  child: Icon(Icons.broken_image_rounded, color: cat.color.withValues(alpha: 0.3), size: 32),
+                ),
               ),
             ),
           // テキストコンテンツ（右側）

@@ -109,7 +109,14 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Image.file(File(_memory.mediaPath!), fit: BoxFit.cover),
+                        Image.file(
+                          File(_memory.mediaPath!),
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: _cat.color.withValues(alpha: 0.1),
+                            child: Center(child: Icon(Icons.broken_image_rounded, size: 48, color: _cat.color.withValues(alpha: 0.3))),
+                          ),
+                        ),
                         // グラデーションオーバーレイでボタンの視認性確保
                         const DecoratedBox(
                           decoration: BoxDecoration(

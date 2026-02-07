@@ -18,10 +18,12 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   @override
   void initState() {
     super.initState();
-    _bannerAd = AdService.instance.createBannerAd(size: widget.adSize);
-    _bannerAd!.load().then((_) {
-      if (mounted) setState(() => _isLoaded = true);
-    });
+    _bannerAd = AdService.instance.createBannerAd(
+      size: widget.adSize,
+      onLoaded: () {
+        if (mounted) setState(() => _isLoaded = true);
+      },
+    );
   }
 
   @override
