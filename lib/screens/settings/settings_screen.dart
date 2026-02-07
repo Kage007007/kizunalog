@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../services/backup_service.dart';
 import '../../services/notification_service.dart';
@@ -53,20 +54,65 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _notificationEnabled = value);
   }
 
-  Future<void> _pickNotificationTime() async {
-    final picked = await showTimePicker(
+  void _pickNotificationTime() {
+    int tempHour = _notificationHour;
+    int tempMinute = _notificationMinute;
+    showModalBottomSheet(
       context: context,
-      initialTime: TimeOfDay(hour: _notificationHour, minute: _notificationMinute),
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SizedBox(
+          height: 300,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: Text('キャンセル', style: TextStyle(color: Colors.grey.shade500)),
+                    ),
+                    const Spacer(),
+                    const Text('通知時刻', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () async {
+                        setState(() {
+                          _notificationHour = tempHour;
+                          _notificationMinute = tempMinute;
+                        });
+                        if (_notificationEnabled) {
+                          await NotificationService.instance
+                              .scheduleDailyNotification(tempHour, tempMinute);
+                        }
+                        if (ctx.mounted) Navigator.of(ctx).pop();
+                      },
+                      child: const Text('決定', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.orange)),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: CupertinoDatePicker(
+                  mode: CupertinoDatePickerMode.time,
+                  initialDateTime: DateTime(2024, 1, 1, _notificationHour, _notificationMinute),
+                  use24hFormat: true,
+                  onDateTimeChanged: (dt) {
+                    tempHour = dt.hour;
+                    tempMinute = dt.minute;
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
-    if (picked != null) {
-      setState(() {
-        _notificationHour = picked.hour;
-        _notificationMinute = picked.minute;
-      });
-      if (_notificationEnabled) {
-        await NotificationService.instance.scheduleDailyNotification(picked.hour, picked.minute);
-      }
-    }
   }
 
   Future<void> _exportData() async {

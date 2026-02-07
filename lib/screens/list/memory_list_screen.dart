@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/share_service.dart';
+import '../../widgets/banner_ad_widget.dart';
 import '../detail/memory_detail_screen.dart';
 
 class MemoryListScreen extends StatefulWidget {
@@ -270,12 +272,28 @@ class _MemoryListScreenState extends State<MemoryListScreen> {
                     ),
                   );
                 }
+                // 5件ごとに広告を挿入
+                final adInterval = 5;
+                final adCount = items.length > adInterval ? (items.length ~/ adInterval) : 0;
+                final totalCount = items.length + adCount;
+
                 return ListView.separated(
                   padding: const EdgeInsets.all(20),
-                  itemCount: items.length,
+                  itemCount: totalCount,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final memory = items[index];
+                    // 広告スロットか判定
+                    final adsBefore = adInterval > 0 ? index ~/ (adInterval + 1) : 0;
+                    final isAd = adInterval > 0 && index > 0 && (index + 1) % (adInterval + 1) == 0;
+                    if (isAd) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 4),
+                        child: Center(child: BannerAdWidget(adSize: AdSize.largeBanner)),
+                      );
+                    }
+                    final memoryIndex = index - adsBefore;
+                    if (memoryIndex >= items.length) return const SizedBox.shrink();
+                    final memory = items[memoryIndex];
                     final cat = MemoryCategory.values.firstWhere(
                       (c) => c.name == memory.category,
                       orElse: () => MemoryCategory.words,

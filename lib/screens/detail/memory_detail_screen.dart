@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../database/database.dart';
 import '../../models/category.dart';
 import '../../services/share_service.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import '../../services/ad_service.dart';
+import '../../widgets/banner_ad_widget.dart';
 
 class MemoryDetailScreen extends StatefulWidget {
   final Memory memory;
@@ -20,6 +23,7 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
   void initState() {
     super.initState();
     _memory = widget.memory;
+    AdService.instance.onDetailView();
   }
 
   Future<void> _refresh() async {
@@ -27,6 +31,29 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
     if (updated != null && mounted) {
       setState(() => _memory = updated);
     }
+  }
+
+  Widget _buildActionButton(IconData icon, VoidCallback onPressed, {bool hasImage = false, bool isDelete = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: hasImage ? Colors.black.withValues(alpha: 0.35) : Colors.transparent,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: isDelete
+                ? (hasImage ? Colors.red.shade300 : Colors.red.shade400)
+                : (hasImage ? Colors.white : null),
+          ),
+        ),
+      ),
+    );
   }
 
   MemoryCategory get _cat => MemoryCategory.values.firstWhere(
@@ -73,30 +100,35 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            backgroundColor: _cat.color.withValues(alpha: 0.15),
+            backgroundColor: hasImage ? Colors.transparent : _cat.color.withValues(alpha: 0.15),
             expandedHeight: hasImage ? 300 : 0,
             pinned: true,
+            foregroundColor: hasImage ? Colors.white : null,
             flexibleSpace: hasImage
                 ? FlexibleSpaceBar(
-                    background: Image.file(
-                      File(_memory.mediaPath!),
-                      fit: BoxFit.cover,
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.file(File(_memory.mediaPath!), fit: BoxFit.cover),
+                        // グラデーションオーバーレイでボタンの視認性確保
+                        const DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.center,
+                              colors: [Colors.black54, Colors.transparent],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : null,
             actions: [
-              IconButton(
-                icon: const Icon(Icons.edit_rounded),
-                onPressed: _edit,
-              ),
-              IconButton(
-                icon: const Icon(Icons.share_rounded),
-                onPressed: () => ShareService.instance.shareMemory(_memory),
-              ),
-              IconButton(
-                icon: Icon(Icons.delete_rounded, color: Colors.red.shade400),
-                onPressed: _delete,
-              ),
+              _buildActionButton(Icons.edit_rounded, _edit, hasImage: hasImage),
+              _buildActionButton(Icons.share_rounded, () => ShareService.instance.shareMemory(_memory), hasImage: hasImage),
+              _buildActionButton(Icons.delete_rounded, _delete, hasImage: hasImage, isDelete: true),
+              const SizedBox(width: 4),
             ],
           ),
           SliverToBoxAdapter(
@@ -178,6 +210,10 @@ class _MemoryDetailScreenState extends State<MemoryDetailScreen> {
                       ),
                     ),
                   ],
+
+                  // 広告バナー
+                  const SizedBox(height: 32),
+                  Center(child: BannerAdWidget(adSize: AdSize.mediumRectangle))
                 ],
               ),
             ),

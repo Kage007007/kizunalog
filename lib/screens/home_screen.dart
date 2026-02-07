@@ -192,14 +192,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: List.generate(_recentMemories.length.clamp(0, 10), (i) {
-                      return AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        width: i == _currentPage ? 16 : 6,
-                        height: 6,
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: i == _currentPage ? Colors.pink.shade300 : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(3),
+                      return GestureDetector(
+                        onTap: () {
+                          _pageController.animateToPage(i,
+                              duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: i == _currentPage ? 16 : 6,
+                          height: 6,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          decoration: BoxDecoration(
+                            color: i == _currentPage ? Colors.pink.shade300 : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
                         ),
                       );
                     }),

@@ -6,10 +6,11 @@ class AdService {
   AdService._();
 
   int _recordCount = 0;
+  int _detailViewCount = 0;
   InterstitialAd? _interstitialAd;
 
   // テスト広告ID（本番リリース時に差し替え）
-  static const String _bannerAdUnitId = 'ca-app-pub-3940256099942544/2435281174';
+  static const String bannerAdUnitId = 'ca-app-pub-3940256099942544/2435281174';
   static const String _interstitialAdUnitId = 'ca-app-pub-3940256099942544/4411468910';
 
   Future<void> initialize() async {
@@ -17,10 +18,10 @@ class AdService {
     _loadInterstitialAd();
   }
 
-  BannerAd createBannerAd() {
+  BannerAd createBannerAd({AdSize size = AdSize.banner}) {
     return BannerAd(
-      adUnitId: _bannerAdUnitId,
-      size: AdSize.banner,
+      adUnitId: bannerAdUnitId,
+      size: size,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {},
@@ -56,10 +57,19 @@ class AdService {
     );
   }
 
-  /// 記録完了時に呼び出す。3回に1回インタースティシャル広告を表示
+  /// 記録完了時に呼び出す。2回に1回インタースティシャル広告を表示
   void onRecordComplete() {
     _recordCount++;
-    if (_recordCount % 3 == 0 && _interstitialAd != null) {
+    if (_recordCount % 2 == 0 && _interstitialAd != null) {
+      _interstitialAd!.show();
+      _interstitialAd = null;
+    }
+  }
+
+  /// 詳細画面表示時。5回に1回インタースティシャル広告を表示
+  void onDetailView() {
+    _detailViewCount++;
+    if (_detailViewCount % 5 == 0 && _interstitialAd != null) {
       _interstitialAd!.show();
       _interstitialAd = null;
     }
