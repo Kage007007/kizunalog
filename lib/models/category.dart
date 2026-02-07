@@ -52,53 +52,18 @@ enum MemoryCategory {
     }
   }
 
-  List<SubType> get subTypes {
+  List<String> get subTypes {
     switch (this) {
       case MemoryCategory.words:
-        return [
-          SubType('言い間違い', '🙊'),
-          SubType('変な名前', '👽'),
-          SubType('嬉しい言葉', '🥰'),
-          SubType('おもしろ発言', '🤣'),
-          SubType('はじめての言葉', '👶'),
-          SubType('その他', '💬'),
-        ];
+        return ['言い間違い', '変な名前', '嬉しい言葉', 'おもしろ発言', 'はじめての言葉', 'その他'];
       case MemoryCategory.album:
-        return [
-          SubType('日常', '📸'),
-          SubType('イベント', '🎉'),
-          SubType('作品', '🎨'),
-          SubType('その他', '📷'),
-        ];
+        return ['日常', 'イベント', '作品', 'その他'];
       case MemoryCategory.money:
-        return [
-          SubType('お年玉', '🧧'),
-          SubType('おこづかい', '💰'),
-          SubType('お祝い', '🎁'),
-          SubType('その他', '💴'),
-        ];
+        return ['お年玉', 'おこづかい', 'お祝い', 'その他'];
       case MemoryCategory.questions:
-        return [
-          SubType('なぜなぜ期', '🤔'),
-          SubType('素朴な疑問', '🌱'),
-          SubType('鋭い質問', '⚡'),
-          SubType('その他', '❓'),
-        ];
+        return ['なぜなぜ期', '素朴な疑問', '鋭い質問', 'その他'];
       case MemoryCategory.growth:
-        return [
-          SubType('身長', '📏'),
-          SubType('体重', '⚖️'),
-          SubType('靴のサイズ', '👟'),
-          SubType('できたね！', '🏆'),
-          SubType('その他', '🌟'),
-        ];
+        return ['身長', '体重', '靴のサイズ', 'できたね！', 'その他'];
     }
   }
-}
-
-class SubType {
-  final String label;
-  final String emoji;
-
-  const SubType(this.label, this.emoji);
 }
