@@ -4,6 +4,6 @@ import 'package:kizunalog/app.dart';
 void main() {
   testWidgets('App launches successfully', (WidgetTester tester) async {
     await tester.pumpWidget(const KizunaLogApp());
-    expect(find.text('KizunaLog'), findsOneWidget);
+    expect(find.text('こども思い出ノート'), findsOneWidget);
   });
 }

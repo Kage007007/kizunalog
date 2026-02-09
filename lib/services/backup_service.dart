@@ -67,7 +67,6 @@ class BackupService {
 
     // ZIPエンコード
     final zipData = ZipEncoder().encode(archive);
-    if (zipData == null) throw Exception('ZIP作成に失敗しました');
 
     final dir = await getApplicationDocumentsDirectory();
     final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -111,7 +110,6 @@ class BackupService {
     }
 
     final zipData = ZipEncoder().encode(archive);
-    if (zipData == null) throw Exception('ZIP作成に失敗しました');
 
     final dir = await getApplicationDocumentsDirectory();
     final zipFile = File(p.join(dir.path, 'kizunalog_backup.zip'));
