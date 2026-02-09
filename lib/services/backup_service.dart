@@ -14,7 +14,7 @@ class BackupService {
   Future<Map<String, dynamic>> _buildExportData() async {
     final memories = await AppDatabase.instance.getAllMemories();
     return {
-      'app': 'KizunaLog',
+      'app': 'こども思い出ノート',
       'version': 2,
       'exported_at': DateTime.now().toIso8601String(),
       'total_records': memories.length,
@@ -77,7 +77,7 @@ class BackupService {
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(zipFile.path)],
-        subject: 'KizunaLog バックアップ',
+        subject: 'こども思い出ノート バックアップ',
       ),
     );
 

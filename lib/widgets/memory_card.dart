@@ -19,6 +19,9 @@ class MemoryCard extends StatelessWidget {
       orElse: () => MemoryCategory.words,
     );
     final hasImage = memory!.mediaPath != null && File(memory!.mediaPath!).existsSync();
+    final hasContent = memory!.content.isNotEmpty;
+    final hasAmount = memory!.amount != null;
+
     return Container(
       width: double.infinity,
       clipBehavior: Clip.antiAlias,
@@ -63,6 +66,7 @@ class MemoryCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ヘッダー行
                   Row(
                     children: [
                       Icon(cat.icon, color: cat.color, size: 18),
@@ -87,36 +91,64 @@ class MemoryCard extends StatelessWidget {
                     _formatDate(memory!.createdAt),
                     style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
                   ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: Text(
-                      memory!.content.isEmpty ? '(写真の思い出)' : memory!.content,
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w500,
-                        height: 1.5,
+
+                  // 金額のみ（テキスト・写真なし）→ 中央に大きく表示
+                  if (!hasContent && !hasImage && hasAmount) ...[
+                    const Spacer(),
+                    if (memory!.subType.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: cat.color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          memory!.subType,
+                          style: TextStyle(fontSize: 12, color: cat.color, fontWeight: FontWeight.w500),
+                        ),
                       ),
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  if (memory!.subType.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: cat.color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        memory!.subType,
-                        style: TextStyle(fontSize: 11, color: cat.color),
-                      ),
-                    ),
-                  if (memory!.amount != null)
+                    const SizedBox(height: 8),
                     Text(
-                      '¥${memory!.amount}',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: cat.color),
+                      '¥${_formatAmount(memory!.amount!)}',
+                      style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: cat.color),
                     ),
+                    const Spacer(),
+                  ] else ...[
+                    // 通常レイアウト
+                    const SizedBox(height: 12),
+                    if (hasContent || hasImage)
+                      Expanded(
+                        child: Text(
+                          hasContent ? memory!.content : '(写真の思い出)',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                            height: 1.5,
+                          ),
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      )
+                    else
+                      const Expanded(child: SizedBox()),
+                    if (memory!.subType.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: cat.color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          memory!.subType,
+                          style: TextStyle(fontSize: 11, color: cat.color),
+                        ),
+                      ),
+                    if (hasAmount)
+                      Text(
+                        '¥${_formatAmount(memory!.amount!)}',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: cat.color),
+                      ),
+                  ],
                 ],
               ),
             ),
@@ -169,5 +201,15 @@ class MemoryCard extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.year}/${date.month}/${date.day}';
+  }
+
+  String _formatAmount(int amount) {
+    final str = amount.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buffer.write(',');
+      buffer.write(str[i]);
+    }
+    return buffer.toString();
   }
 }

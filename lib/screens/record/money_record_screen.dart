@@ -42,7 +42,7 @@ class _MoneyRecordScreenState extends State<MoneyRecordScreen> {
   }
 
   Future<void> _share() async {
-    final text = '${_category.label} - ${_selectedSubType ?? ''}\n¥${_amountController.text}${_memoController.text.trim().isNotEmpty ? '\n${_memoController.text.trim()}' : ''}\n\n#KizunaLog';
+    final text = '${_category.label} - ${_selectedSubType ?? ''}\n¥${_amountController.text}${_memoController.text.trim().isNotEmpty ? '\n${_memoController.text.trim()}' : ''}\n\n#こども思い出ノート';
     await SharePlus.instance.share(ShareParams(text: text));
   }
 

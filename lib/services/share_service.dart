@@ -30,7 +30,7 @@ class ShareService {
 
   /// 個別の思い出をシェア
   Future<void> shareMemory(Memory memory) async {
-    final text = '${_formatMemory(memory)}\n\n#KizunaLog';
+    final text = '${_formatMemory(memory)}\n\n#こども思い出ノート';
     final List<XFile> files = [];
 
     if (memory.mediaPath != null && File(memory.mediaPath!).existsSync()) {
@@ -50,7 +50,7 @@ class ShareService {
     if (memories.isEmpty) return;
 
     final buf = StringBuffer();
-    buf.writeln('KizunaLog - ${memories.length}件の思い出');
+    buf.writeln('こども思い出ノート - ${memories.length}件の思い出');
     buf.writeln('${'─' * 20}');
 
     final List<XFile> files = [];
@@ -65,7 +65,7 @@ class ShareService {
     }
 
     buf.writeln();
-    buf.writeln('#KizunaLog');
+    buf.writeln('#こども思い出ノート');
 
     await SharePlus.instance.share(
       ShareParams(

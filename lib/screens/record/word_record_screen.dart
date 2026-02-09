@@ -39,7 +39,7 @@ class _WordRecordScreenState extends State<WordRecordScreen> {
   }
 
   Future<void> _share() async {
-    final text = '${_category.label} - ${_selectedSubType ?? ''}\n${_textController.text.trim()}\n\n#KizunaLog';
+    final text = '${_category.label} - ${_selectedSubType ?? ''}\n${_textController.text.trim()}\n\n#こども思い出ノート';
     await SharePlus.instance.share(ShareParams(text: text));
   }
 

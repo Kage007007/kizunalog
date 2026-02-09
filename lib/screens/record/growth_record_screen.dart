@@ -59,7 +59,7 @@ class _GrowthRecordScreenState extends State<GrowthRecordScreen> {
 
   Future<void> _share() async {
     final content = _isNumericType ? '${_valueController.text}$_unitLabel' : _valueController.text.trim();
-    final text = '${_category.label} - ${_selectedSubType ?? ''}\n$content\n\n#KizunaLog';
+    final text = '${_category.label} - ${_selectedSubType ?? ''}\n$content\n\n#こども思い出ノート';
     await SharePlus.instance.share(ShareParams(text: text));
   }
 

@@ -31,7 +31,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _PageData(
       icon: Icons.auto_awesome_rounded,
       color: Color(0xFFFF8A9E),
-      title: 'KizunaLogへようこそ',
+      title: 'こども思い出ノートへようこそ',
       subtitle: 'お子さんの大切な思い出を\nかんたんに記録できるアプリです',
     ),
     _PageData(

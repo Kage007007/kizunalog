@@ -74,7 +74,7 @@ class NotificationService {
 
     await _plugin.zonedSchedule(
       id: 0,
-      title: 'KizunaLog',
+      title: 'こども思い出ノート',
       body: '今日の思い出を記録しませんか？',
       scheduledDate: scheduled,
       notificationDetails: notificationDetails,
