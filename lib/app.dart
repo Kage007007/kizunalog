@@ -8,7 +8,7 @@ class KizunaLogApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'こども思い出ノート',
+      title: 'おもいでノート',
       theme: AppTheme.light,
       debugShowCheckedModeBanner: false,
       home: const HomeScreen(),

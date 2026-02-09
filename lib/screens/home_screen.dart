@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 children: [
                   const Text(
-                    'こども思い出ノート',
+                    'おもいでノート',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,

@@ -37,7 +37,7 @@ class _QuestionRecordScreenState extends State<QuestionRecordScreen> {
   }
 
   Future<void> _share() async {
-    final text = '${_category.label} - ${_selectedSubType ?? ''}\n${_textController.text.trim()}\n\n#こども思い出ノート';
+    final text = '${_category.label} - ${_selectedSubType ?? ''}\n${_textController.text.trim()}\n\n#おもいでノート';
     await SharePlus.instance.share(ShareParams(text: text));
   }
 

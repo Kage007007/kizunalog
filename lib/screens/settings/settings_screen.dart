@@ -308,7 +308,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const Divider(height: 1),
-              _buildInfoRow(Icons.apps_rounded, 'アプリ名', 'こども思い出ノート'),
+              _buildInfoRow(Icons.apps_rounded, 'アプリ名', 'おもいでノート'),
               _buildInfoRow(Icons.tag_rounded, 'バージョン', '1.0.0'),
             ],
           ),

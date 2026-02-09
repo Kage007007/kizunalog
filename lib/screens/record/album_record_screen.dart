@@ -72,7 +72,7 @@ class _AlbumRecordScreenState extends State<AlbumRecordScreen> {
     if (_imageFile != null && _imageFile!.existsSync()) {
       files.add(XFile(_imageFile!.path));
     }
-    final text = '${_category.label} - ${_selectedSubType ?? ''}${_textController.text.trim().isNotEmpty ? '\n${_textController.text.trim()}' : ''}\n\n#こども思い出ノート';
+    final text = '${_category.label} - ${_selectedSubType ?? ''}${_textController.text.trim().isNotEmpty ? '\n${_textController.text.trim()}' : ''}\n\n#おもいでノート';
     await SharePlus.instance.share(ShareParams(text: text, files: files.isEmpty ? null : files));
   }
 
