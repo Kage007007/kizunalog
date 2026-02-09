@@ -86,9 +86,13 @@ class AppDatabase extends _$AppDatabase {
     // 写真ファイルがあれば削除
     final memory = await getMemoryById(id);
     if (memory?.mediaPath != null) {
-      final file = File(memory!.mediaPath!);
-      if (await file.exists()) {
-        await file.delete();
+      try {
+        final file = File(memory!.mediaPath!);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (_) {
+        // ファイル削除失敗してもDBレコードは削除する
       }
     }
     return (delete(memories)..where((t) => t.id.equals(id))).go();
@@ -103,7 +107,7 @@ class AppDatabase extends _$AppDatabase {
 
   /// キーワード検索
   Stream<List<Memory>> searchMemories(String keyword) {
-    final escaped = keyword.replaceAll('%', r'\%').replaceAll('_', r'\_');
+    final escaped = keyword.replaceAll(r'\', r'\\').replaceAll('%', r'\%').replaceAll('_', r'\_');
     return (select(memories)
           ..where((t) => t.content.like('%$escaped%') | t.subType.like('%$escaped%'))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))

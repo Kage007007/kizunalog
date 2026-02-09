@@ -28,6 +28,7 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   void dispose() {
+    _isLoaded = false;
     _bannerAd?.dispose();
     super.dispose();
   }

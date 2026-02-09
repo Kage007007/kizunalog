@@ -13,8 +13,12 @@ class NotificationService {
   static const _enabledKey = 'notification_enabled';
 
   Future<void> initialize() async {
-    tzdata.initializeTimeZones();
-    tz.setLocalLocation(tz.getLocation('Asia/Tokyo'));
+    try {
+      tzdata.initializeTimeZones();
+      tz.setLocalLocation(tz.getLocation('Asia/Tokyo'));
+    } catch (_) {
+      tz.setLocalLocation(tz.UTC);
+    }
 
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,

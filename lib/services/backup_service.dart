@@ -52,11 +52,15 @@ class BackupService {
     // 写真を追加
     for (final m in memories) {
       if (m.mediaPath != null) {
-        final file = File(m.mediaPath!);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          final fileName = 'photos/${p.basename(m.mediaPath!)}';
-          archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+        try {
+          final file = File(m.mediaPath!);
+          if (await file.exists()) {
+            final bytes = await file.readAsBytes();
+            final fileName = 'photos/${p.basename(m.mediaPath!)}';
+            archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+          }
+        } catch (_) {
+          // 読み取り失敗した写真はスキップ
         }
       }
     }
@@ -93,11 +97,15 @@ class BackupService {
 
     for (final m in memories) {
       if (m.mediaPath != null) {
-        final file = File(m.mediaPath!);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          final fileName = 'photos/${p.basename(m.mediaPath!)}';
-          archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+        try {
+          final file = File(m.mediaPath!);
+          if (await file.exists()) {
+            final bytes = await file.readAsBytes();
+            final fileName = 'photos/${p.basename(m.mediaPath!)}';
+            archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+          }
+        } catch (_) {
+          // 読み取り失敗した写真はスキップ
         }
       }
     }

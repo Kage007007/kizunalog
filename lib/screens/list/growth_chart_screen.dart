@@ -87,7 +87,9 @@ class _GrowthChartScreenState extends State<GrowthChartScreen> {
                     if (value != null) {
                       spots.add(FlSpot(i.toDouble(), value));
                     }
-                  } catch (_) {}
+                  } catch (e) {
+                    debugPrint('Failed to parse metadata: $e');
+                  }
                 }
 
                 if (spots.isEmpty) {

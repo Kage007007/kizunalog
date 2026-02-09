@@ -64,21 +64,27 @@ class AdService {
     );
   }
 
-  /// 記録完了時に呼び出す。2回に1回インタースティシャル広告を表示
+  /// 記録完了時に呼び出す。3回に1回インタースティシャル広告を表示
   void onRecordComplete() {
     _recordCount++;
-    if (_recordCount % 2 == 0 && _interstitialAd != null) {
-      _interstitialAd!.show();
-      _interstitialAd = null;
+    if (_recordCount % 3 == 0) {
+      final ad = _interstitialAd;
+      if (ad != null) {
+        _interstitialAd = null;
+        ad.show();
+      }
     }
   }
 
   /// 詳細画面表示時。5回に1回インタースティシャル広告を表示
   void onDetailView() {
     _detailViewCount++;
-    if (_detailViewCount % 5 == 0 && _interstitialAd != null) {
-      _interstitialAd!.show();
-      _interstitialAd = null;
+    if (_detailViewCount % 5 == 0) {
+      final ad = _interstitialAd;
+      if (ad != null) {
+        _interstitialAd = null;
+        ad.show();
+      }
     }
   }
 }
